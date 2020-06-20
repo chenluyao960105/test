@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}">
+    <script th:src="@{/layui/layui.js}"></script>
+</head>
+<body>
+<table id="deptinfo" lay-filter="test"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+</script>
+<form class="layui-form" action="" lay-filter="formData" id="editInfoById" style="display: none">
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="text" name="deptId"  placeholder="请输入标题" autocomplete="off" class="layui-input">
+            </div>
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="deptName"  placeholder="请输入标题" autocomplete="off" class="layui-input">
+            </div>
+            <label class="layui-form-label">排序</label>
+            <div class="layui-input-block">
+                <input type="text" name="orderNum"  placeholder="请输入标题" autocomplete="off" class="layui-input">
+            </div>
+            <label class="layui-form-label">创建人</label>
+            <div class="layui-input-block">
+                <input type="text" name="creatBy"  placeholder="请输入标题" autocomplete="off" class="layui-input">
+            </div>
+            <label class="layui-form-label">创建时间</label>
+            <div class="layui-input-block">
+                <input type="text" name="createTime" placeholder="请输入标题" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+    layui.use(['layer', 'form','table','jquery'], function() {
+        var form = layui.form
+            , layer = layui.layer //弹层
+            , table = layui.table //表格
+            ,$ = layui.jquery;
+        //执行一个 table 实例
+        var myTable = table.render({
+            elem: '#deptinfo'
+            ,height: 420
+            ,url: '/dept/selectAllDept' //数据接口
+            ,title: '用户表'
+            ,totalRow: true //开启合计行
+            ,cols: [
+                [ //表头
+                {field: 'deptId', title: '部门编号', width:80}
+                ,{field: 'deptName', title: '部门名称', width: 90,}
+                ,{field: 'orderNum', title: '排序', width:80, }
+                ,{field: 'creatBy', title: '创建人', width: 80,}
+                ,{field: 'createTime', title: '创建时间', width:150}
+                ,{field: 'updateBy', title: '修改人', width: 200}
+                ,{field: 'updateTime', title: '修改时间', width: 100}
+                ,{fixed: 'right', width: 165, align:'center', toolbar: '#barDemo'}
+            ]]
+        });
+        //监听行工具事件
+        table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data //获得当前行数据
+                ,layEvent = obj.event; //获得 lay-event 对应的值
+            if(layEvent === 'edit'){
+                var deptId = data.deptId;
+                $.ajax({
+                    url:"/dept/selectById",
+                    data:{deptId:deptId},
+                    type:"post",
+                    dataType:"json",
+                    success:function (result) {
+                        form.val("formData",{
+                            "deptId":result.deptId,
+                            "deptName":result.deptName,
+                            "orderNum":result.orderNum,
+                            "creatBy":result.creatBy,
+                            "createTime":result.createTime,
+                        })
+                    }
+                })
+                layer.open({
+                    type:1
+                    ,title: '修改'
+                    ,content: $('#editInfoById')
+                });
+            }
+        });
+        //监听表单的提交
+        form.on('submit(formDemo)', function(data){
+            $.ajax({
+                    url:'/dept/updateDept',
+                    dataType:'json',
+                    type:'POST',
+                    data:data.field,
+                    success:function (result) {
+                        layer.closeAll();//完成之后关闭对话框
+                        layer.msg(result.msg);
+                        myTable.reload();//重新加载表格数据
+                    }
+            })
+
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
